@@ -3,13 +3,17 @@ ms:=10000
 s:=$(shell echo "scale=3; $(ms) / 1000" | bc | awk '{printf "%.3f\n", $$0}')
 sr:=48000
 codec:=pcm_s24le
-bps:=24
+bps:=$(shell echo $(codec) | sed -e 's/[^0-9]//g')
 mode:=stereo
 ifeq ($(mode),mono)
 	ch:=1
 else
 	ch:=2
 endif
+
+sine_wav:=sine-$(mode)-$(f)Hz-$(ms)ms-$(sr)Hz-$(codec).wav
+silence_wav:=silence-$(mode)-$(ms)ms-$(sr)Hz-$(codec).wav
+noise_wav:=noise-$(mode)-$(ms)ms-$(sr)Hz-$(codec).wav
 
 noise_header_size=$(shell du -b noise_header.tmp | awk '{print $$1}')
 noise_data_size=$(shell du -b noise_empty.tmp | awk '{print $$1-$(noise_header_size)}')
@@ -21,35 +25,34 @@ config:
 	@echo codec=$(codec)
 	@echo mode=$(mode)
 	@echo bytes/ms=$(shell echo "scale=3; $(ch) * $(sr) * $(bps) / 8 / 1000" | bc)
-# bytes/msに端数がある場合、この形式ではミリ秒は正確に記録されない。
+#	bytes/msに端数がある場合、この形式ではミリ秒は正確に記録されない。
 
 # 正弦波
-sine: sine-$(mode)-$(f)Hz-$(ms)ms-$(sr)Hz-$(codec).wav
-sine-$(mode)-$(f)Hz-$(ms)ms-$(sr)Hz-$(codec).wav:
-	ffmpeg -y -f lavfi -i sine=frequency=$(f):sample_rate=$(sr):duration=$(s) -ac $(ch) -acodec $(codec) sine-$(mode)-$(f)Hz-$(ms)ms-$(sr)Hz-$(codec).wav
+sine: $(sine_wav)
+$(sine_wav):
+	ffmpeg -y -f lavfi -i sine=frequency=$(f):sample_rate=$(sr):duration=$(s) -ac $(ch) -acodec $(codec) $@
 
 # 無音
-silence: silence-$(mode)-$(ms)ms-$(sr)Hz-$(codec).wav
-silence-$(mode)-$(ms)ms-$(sr)Hz-$(codec).wav:
-	ffmpeg -y -f lavfi -i anullsrc=channel_layout=$(mode):sample_rate=$(sr):duration=$(s) -ac $(ch) -acodec $(codec) silence-$(mode)-$(ms)ms-$(sr)Hz-$(codec).wav
+silence: $(silence_wav)
+$(silence_wav):
+	ffmpeg -y -f lavfi -i anullsrc=channel_layout=$(mode):sample_rate=$(sr):duration=$(s) -ac $(ch) -acodec $(codec) $@
 
 # ノイズ
-noise: noise-$(mode)-$(ms)ms-$(sr)Hz-$(codec).wav
-noise-$(mode)-$(ms)ms-$(sr)Hz-$(codec).wav: noise_header.tmp noise_data.tmp
+noise: $(noise_wav)
+$(noise_wav): noise_header.tmp noise_data.tmp
 #	結合
-	cat noise_header.tmp noise_data.tmp > noise-$(mode)-$(ms)ms-$(sr)Hz-$(codec).wav
+	cat $^ > $@
 	rm -f *.tmp
 noise_header.tmp: noise_empty.tmp
 #	ヘッダを切り出し
 #	サブチャンク識別子'data', サブチャンクサイズ4byte
-	perl -pe s/\(data.{4}\).*$$/\$$1/ noise_empty.tmp > noise_header.tmp
-noise_empty.tmp:
+	perl -pe s/\(data.{4}\).*$$/\$$1/ $< > $@
+noise_empty.tmp: $(silence_wav)
 #	空白のwavファイルを生成
-	ffmpeg -y -f lavfi -i anullsrc=channel_layout=$(mode):sample_rate=$(sr):duration=$(s) -ac $(ch) -acodec $(codec) noise_empty.wav
-	mv noise_empty.wav noise_empty.tmp
+	mv $< $@
 noise_data.tmp: noise_empty.tmp noise_header.tmp
 #	ノイズ部分を生成
-	dd if=/dev/urandom of=noise_data.tmp bs=256M iflag=count_bytes count=$(noise_data_size)
+	dd if=/dev/urandom of=$@ bs=256M iflag=count_bytes count=$(noise_data_size)
 
 .PHONY: clean
 clean:
