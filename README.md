@@ -9,25 +9,25 @@ Simple command-line oscillator
 ## Configuration
 ```Makefile
 # frequency of sine wave
-f:=440
+FREQUENCY:=440
 
 # duration
-ms:=10000
-s:=$(shell echo "scale=3; $(ms) / 1000" | bc | awk '{printf "%.3f\n", $$0}')
+DURATION:=10000
+SEC:=$(shell echo "scale=3; $(DURATION) / 1000" | bc | awk '{printf "%.3f\n", $$0}')
 
 # sampling rate
-sr:=48000
+SAMPLES_PER_SEC:=48000
 # bit rate
 # see also ffmpeg document
-codec:=pcm_s24le
-bps:=$(shell echo $(codec) | sed -e 's/[^0-9]//g')
+CODEC:=pcm_s24le
+BITS_PER_SAMPLE:=$(shell echo $(CODEC) | sed -e 's/[^0-9]//g')
 
 # mono/stereo
-mode:=stereo
-ifeq ($(mode),mono)
-	ch:=1
+LAYOUT:=stereo
+ifeq ($(LAYOUT),mono)
+	CHANNEL:=1
 else
-	ch:=2
+	CHANNEL:=2
 endif
 ```
 

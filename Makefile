@@ -1,50 +1,50 @@
 # frequency of sine wave
-f:=440
+FREQUENCY:=440
 
 # duration
-ms:=10000
-s:=$(shell echo "scale=3; $(ms) / 1000" | bc | awk '{printf "%.3f\n", $$0}')
+DURATION:=10000
+SEC:=$(shell echo "scale=3; $(DURATION) / 1000" | bc | awk '{printf "%.3f\n", $$0}')
 
 # sampling rate
-sr:=48000
+SAMPLES_PER_SEC:=48000
 # bit rate
 # see also ffmpeg document
-codec:=pcm_s24le
-bps:=$(shell echo $(codec) | sed -e 's/[^0-9]//g')
+CODEC:=pcm_s24le
+BITS_PER_SAMPLE:=$(shell echo $(CODEC) | sed -e 's/[^0-9]//g')
 
 # mono/stereo
-mode:=stereo
-ifeq ($(mode),mono)
-	ch:=1
+LAYOUT:=stereo
+ifeq ($(LAYOUT),mono)
+	CHANNEL:=1
 else
-	ch:=2
+	CHANNEL:=2
 endif
 
-sine_wav:=sine-$(mode)-$(f)Hz-$(ms)ms-$(sr)Hz-$(codec).wav
-silence_wav:=silence-$(mode)-$(ms)ms-$(sr)Hz-$(codec).wav
-noise_wav:=noise-$(mode)-$(ms)ms-$(sr)Hz-$(codec).wav
+sine_wav:=sine-$(LAYOUT)-$(FREQUENCY)Hz-$(DURATION)ms-$(SAMPLES_PER_SEC)Hz-$(CODEC).wav
+silence_wav:=silence-$(LAYOUT)-$(DURATION)ms-$(SAMPLES_PER_SEC)Hz-$(CODEC).wav
+noise_wav:=noise-$(LAYOUT)-$(DURATION)ms-$(SAMPLES_PER_SEC)Hz-$(CODEC).wav
 
 noise_header_size=$(shell du -b noise_header.tmp | awk '{print $$1}')
 noise_data_size=$(shell du -b noise_empty.tmp | awk '{print $$1-$(noise_header_size)}')
 
 config:
-	@echo frequency=$(f)
-	@echo millisecond=$(ms)
-	@echo samplerate=$(sr)
-	@echo codec=$(codec)
-	@echo mode=$(mode)
-	@echo bytes/ms=$(shell echo "scale=3; $(ch) * $(sr) * $(bps) / 8 / 1000" | bc)
+	@echo frequency=$(FREQUENCY)
+	@echo millisecond=$(DURATION)
+	@echo samplerate=$(SAMPLES_PER_SEC)
+	@echo codec=$(CODEC)
+	@echo mode=$(LAYOUT)
+	@echo bytes/ms=$(shell echo "scale=3; $(CHANNEL) * $(SAMPLES_PER_SEC) * $(BITS_PER_SAMPLE) / 8 / 1000" | bc)
 #	bytes/msに端数がある場合、この形式ではミリ秒は正確に記録されない。
 
 # 正弦波
 sine: $(sine_wav)
 $(sine_wav):
-	ffmpeg -y -f lavfi -i sine=frequency=$(f):sample_rate=$(sr):duration=$(s) -ac $(ch) -acodec $(codec) $@
+	ffmpeg -y -f lavfi -i sine=frequency=$(FREQUENCY):sample_rate=$(SAMPLES_PER_SEC):duration=$(SEC) -ac $(CHANNEL) -acodec $(CODEC) $@
 
 # 無音
 silence: $(silence_wav)
 $(silence_wav):
-	ffmpeg -y -f lavfi -i anullsrc=channel_layout=$(mode):sample_rate=$(sr):duration=$(s) -ac $(ch) -acodec $(codec) $@
+	ffmpeg -y -f lavfi -i anullsrc=channel_layout=$(LAYOUT):sample_rate=$(SAMPLES_PER_SEC):duration=$(SEC) -ac $(CHANNEL) -acodec $(CODEC) $@
 
 # ノイズ
 noise: $(noise_wav)
@@ -58,7 +58,7 @@ noise_header.tmp: noise_empty.tmp
 	perl -pe s/\(data.{4}\).*$$/\$$1/ $< > $@
 noise_empty.tmp:
 #	空白のwavファイルを生成
-	ffmpeg -y -f lavfi -i anullsrc=channel_layout=$(mode):sample_rate=$(sr):duration=$(s) -ac $(ch) -acodec $(codec) noise_empty.wav
+	ffmpeg -y -f lavfi -i anullsrc=channel_layout=$(LAYOUT):sample_rate=$(SAMPLES_PER_SEC):duration=$(SEC) -ac $(CHANNEL) -acodec $(CODEC) noise_empty.wav
 	mv noise_empty.wav $@
 noise_data.tmp: noise_empty.tmp noise_header.tmp
 #	ノイズ部分を生成
