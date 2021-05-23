@@ -47,9 +47,10 @@ noise_header.tmp: noise_empty.tmp
 #	ヘッダを切り出し
 #	サブチャンク識別子'data', サブチャンクサイズ4byte
 	perl -pe s/\(data.{4}\).*$$/\$$1/ $< > $@
-noise_empty.tmp: $(silence_wav)
+noise_empty.tmp:
 #	空白のwavファイルを生成
-	mv $< $@
+	ffmpeg -y -f lavfi -i anullsrc=channel_layout=$(mode):sample_rate=$(sr):duration=$(s) -ac $(ch) -acodec $(codec) noise_empty.wav
+	mv noise_empty.wav $@
 noise_data.tmp: noise_empty.tmp noise_header.tmp
 #	ノイズ部分を生成
 	dd if=/dev/urandom of=$@ bs=256M iflag=count_bytes count=$(noise_data_size)
