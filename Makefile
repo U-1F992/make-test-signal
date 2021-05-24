@@ -10,9 +10,6 @@ BITS_PER_SAMPLE:=24
 # mono/stereo
 CHANNEL_LAYOUT:=stereo
 
-# output file name
-OUTPUT:=
-
 FFMPEG=ffmpeg -y -loglevel warning
 
 SEC:=$(shell echo "scale=3; $(DURATION) / 1000" | bc | awk '{printf "%.3f\n", $$0}')
@@ -41,27 +38,22 @@ config:
 	@echo -e "bytes/ms\t= $(shell echo "scale=3; $(CHANNEL) * $(SAMPLES_PER_SEC) * $(BITS_PER_SAMPLE) / 8 / 1000" | bc)"
 #	bytes/msに端数がある場合、この形式ではミリ秒は正確に記録されない。
 
+.PHONY: sine
+.PHONY: silence
+.PHONY: noise
+
 # 正弦波
 sine: $(SINE_WAV)
-ifdef OUTPUT
-	mv $< $(OUTPUT)
-endif
 $(SINE_WAV):
 	$(FFMPEG) -f lavfi -i sine=frequency=$(FREQUENCY):sample_rate=$(SAMPLES_PER_SEC):duration=$(SEC) -ac $(CHANNEL) -acodec $(CODEC) $@
 
 # 無音
 silence: $(SILENCE_WAV)
-ifdef OUTPUT
-	mv $< $(OUTPUT)
-endif
 $(SILENCE_WAV):
 	$(FFMPEG) -f lavfi -i anullsrc=channel_layout=$(CHANNEL_LAYOUT):sample_rate=$(SAMPLES_PER_SEC):duration=$(SEC) -ac $(CHANNEL) -acodec $(CODEC) $@
 
 # ノイズ
 noise: $(NOISE_WAV)
-ifdef OUTPUT
-	mv $< $(OUTPUT)
-endif
 $(NOISE_WAV): noise_header.tmp noise_data.tmp
 #	結合
 	cat $^ > $@
