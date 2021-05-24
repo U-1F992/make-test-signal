@@ -20,6 +20,11 @@ ifeq ($(CHANNEL_LAYOUT),mono)
 else
 	CHANNEL:=2
 endif
+OPT:=-ac $(CHANNEL) -acodec $(CODEC)
+
+# oscillator
+OSC_SINE:=-f lavfi -i sine=frequency=$(FREQUENCY):sample_rate=$(SAMPLES_PER_SEC):duration=$(SEC)
+OSC_SILENCE:=-f lavfi -i anullsrc=channel_layout=$(CHANNEL_LAYOUT):sample_rate=$(SAMPLES_PER_SEC):duration=$(SEC)
 
 # default output name
 SINE_WAV:=sine-$(FREQUENCY)Hz-$(DURATION)ms-$(SAMPLES_PER_SEC)Hz-$(CODEC)-$(CHANNEL_LAYOUT).wav
@@ -45,12 +50,12 @@ config:
 # 正弦波
 sine: $(SINE_WAV)
 $(SINE_WAV):
-	$(FFMPEG) -f lavfi -i sine=frequency=$(FREQUENCY):sample_rate=$(SAMPLES_PER_SEC):duration=$(SEC) -ac $(CHANNEL) -acodec $(CODEC) $@
+	$(FFMPEG) $(OSC_SINE) $(OPT) $@
 
 # 無音
 silence: $(SILENCE_WAV)
 $(SILENCE_WAV):
-	$(FFMPEG) -f lavfi -i anullsrc=channel_layout=$(CHANNEL_LAYOUT):sample_rate=$(SAMPLES_PER_SEC):duration=$(SEC) -ac $(CHANNEL) -acodec $(CODEC) $@
+	$(FFMPEG) $(OSC_SILENCE) $(OPT) $@
 
 # ノイズ
 noise: $(NOISE_WAV)
@@ -65,7 +70,7 @@ noise_header.tmp: noise_empty.tmp
 	perl -pe s/\(data.{4}\).*$$/\$$1/ $< > $@
 noise_empty.tmp:
 #	空白のwavファイルを生成
-	$(FFMPEG) -f lavfi -i anullsrc=channel_layout=$(CHANNEL_LAYOUT):sample_rate=$(SAMPLES_PER_SEC):duration=$(SEC) -ac $(CHANNEL) -acodec $(CODEC) noise_empty.wav
+	$(FFMPEG) $(OSC_SILENCE) $(OPT) noise_empty.wav
 	mv noise_empty.wav $@
 noise_data.tmp: noise_empty.tmp noise_header.tmp
 #	ノイズ部分を生成
