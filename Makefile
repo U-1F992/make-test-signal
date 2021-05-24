@@ -30,12 +30,12 @@ noise_header_size=$(shell du -b noise_header.tmp | awk '{print $$1}')
 noise_data_size=$(shell du -b noise_empty.tmp | awk '{print $$1-$(noise_header_size)}')
 
 config:
-	@echo frequency=$(FREQUENCY)
-	@echo millisecond=$(DURATION)
-	@echo samplerate=$(SAMPLES_PER_SEC)
-	@echo codec=$(CODEC)
-	@echo mode=$(LAYOUT)
-	@echo bytes/ms=$(shell echo "scale=3; $(CHANNEL) * $(SAMPLES_PER_SEC) * $(BITS_PER_SAMPLE) / 8 / 1000" | bc)
+	@echo -e "FREQUENCY\t= $(FREQUENCY)"
+	@echo -e "DURATION\t= $(DURATION)"
+	@echo -e "SAMPLES_PER_SEC\t= $(SAMPLES_PER_SEC)"
+	@echo -e "CODEC\t\t= $(CODEC)"
+	@echo -e "LAYOUT\t\t= $(LAYOUT)"
+	@echo -e "bytes/ms\t= $(shell echo "scale=3; $(CHANNEL) * $(SAMPLES_PER_SEC) * $(BITS_PER_SAMPLE) / 8 / 1000" | bc)"
 #	bytes/msに端数がある場合、この形式ではミリ秒は正確に記録されない。
 
 # 正弦波
