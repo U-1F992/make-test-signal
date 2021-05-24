@@ -3,24 +3,23 @@ FREQUENCY:=440
 
 # duration(ms)
 DURATION:=1000
-SEC:=$(shell echo "scale=3; $(DURATION) / 1000" | bc | awk '{printf "%.3f\n", $$0}')
 
-# sampling rate
 SAMPLES_PER_SEC:=48000
-# bit rate
-# see also ffmpeg document
 BITS_PER_SAMPLE:=24
-CODEC:=pcm_s$(BITS_PER_SAMPLE)le
 
 # mono/stereo
 CHANNEL_LAYOUT:=stereo
+
+FFMPEG=ffmpeg -y -loglevel warning
+
+SEC:=$(shell echo "scale=3; $(DURATION) / 1000" | bc | awk '{printf "%.3f\n", $$0}')
+#	see also ffmpeg document
+CODEC:=pcm_s$(BITS_PER_SAMPLE)le
 ifeq ($(CHANNEL_LAYOUT),mono)
 	CHANNEL:=1
 else
 	CHANNEL:=2
 endif
-
-FFMPEG=ffmpeg -y -loglevel warning
 
 SINE_WAV:=sine-$(FREQUENCY)Hz-$(DURATION)ms-$(SAMPLES_PER_SEC)Hz-$(CODEC)-$(CHANNEL_LAYOUT).wav
 SILENCE_WAV:=silence-$(DURATION)ms-$(SAMPLES_PER_SEC)Hz-$(CODEC)-$(CHANNEL_LAYOUT).wav
