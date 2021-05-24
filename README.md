@@ -19,6 +19,9 @@ BITS_PER_SAMPLE:=24
 
 # mono/stereo
 CHANNEL_LAYOUT:=stereo
+
+# output file name
+OUTPUT:=
 ```
 
 ## Usage

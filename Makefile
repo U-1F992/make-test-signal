@@ -10,6 +10,9 @@ BITS_PER_SAMPLE:=24
 # mono/stereo
 CHANNEL_LAYOUT:=stereo
 
+# output file name
+OUTPUT:=
+
 FFMPEG=ffmpeg -y -loglevel warning
 
 SEC:=$(shell echo "scale=3; $(DURATION) / 1000" | bc | awk '{printf "%.3f\n", $$0}')
@@ -21,6 +24,7 @@ else
 	CHANNEL:=2
 endif
 
+# default output name
 SINE_WAV:=sine-$(FREQUENCY)Hz-$(DURATION)ms-$(SAMPLES_PER_SEC)Hz-$(CODEC)-$(CHANNEL_LAYOUT).wav
 SILENCE_WAV:=silence-$(DURATION)ms-$(SAMPLES_PER_SEC)Hz-$(CODEC)-$(CHANNEL_LAYOUT).wav
 NOISE_WAV:=noise-$(DURATION)ms-$(SAMPLES_PER_SEC)Hz-$(CODEC)-$(CHANNEL_LAYOUT).wav
