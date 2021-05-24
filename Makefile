@@ -1,8 +1,8 @@
 # frequency of sine wave
 FREQUENCY:=440
 
-# duration
-DURATION:=10000
+# duration(ms)
+DURATION:=1000
 SEC:=$(shell echo "scale=3; $(DURATION) / 1000" | bc | awk '{printf "%.3f\n", $$0}')
 
 # sampling rate
@@ -19,6 +19,8 @@ ifeq ($(LAYOUT),mono)
 else
 	CHANNEL:=2
 endif
+
+FFMPEG=ffmpeg -y -loglevel warning
 
 SINE_WAV:=sine-$(FREQUENCY)Hz-$(DURATION)ms-$(SAMPLES_PER_SEC)Hz-$(CODEC)-$(LAYOUT).wav
 SILENCE_WAV:=silence-$(DURATION)ms-$(SAMPLES_PER_SEC)Hz-$(CODEC)-$(LAYOUT).wav
@@ -38,27 +40,37 @@ config:
 
 # 正弦波
 sine: $(SINE_WAV)
+ifdef OUTPUT
+	mv $< $(OUTPUT)
+endif
 $(SINE_WAV):
-	ffmpeg -y -f lavfi -i sine=frequency=$(FREQUENCY):sample_rate=$(SAMPLES_PER_SEC):duration=$(SEC) -ac $(CHANNEL) -acodec $(CODEC) $@
+	$(FFMPEG) -f lavfi -i sine=frequency=$(FREQUENCY):sample_rate=$(SAMPLES_PER_SEC):duration=$(SEC) -ac $(CHANNEL) -acodec $(CODEC) $@
 
 # 無音
 silence: $(SILENCE_WAV)
+ifdef OUTPUT
+	mv $< $(OUTPUT)
+endif
 $(SILENCE_WAV):
-	ffmpeg -y -f lavfi -i anullsrc=channel_layout=$(LAYOUT):sample_rate=$(SAMPLES_PER_SEC):duration=$(SEC) -ac $(CHANNEL) -acodec $(CODEC) $@
+	$(FFMPEG) -f lavfi -i anullsrc=channel_layout=$(LAYOUT):sample_rate=$(SAMPLES_PER_SEC):duration=$(SEC) -ac $(CHANNEL) -acodec $(CODEC) $@
 
 # ノイズ
 noise: $(NOISE_WAV)
+ifdef OUTPUT
+	mv $< $(OUTPUT)
+endif
 $(NOISE_WAV): noise_header.tmp noise_data.tmp
 #	結合
 	cat $^ > $@
-	rm -f *.tmp
+
+.INTERMEDIATE: noise_header.tmp noise_empty.tmp noise_data.tmp
 noise_header.tmp: noise_empty.tmp
 #	ヘッダを切り出し
 #	サブチャンク識別子'data', サブチャンクサイズ4byte
 	perl -pe s/\(data.{4}\).*$$/\$$1/ $< > $@
 noise_empty.tmp:
 #	空白のwavファイルを生成
-	ffmpeg -y -f lavfi -i anullsrc=channel_layout=$(LAYOUT):sample_rate=$(SAMPLES_PER_SEC):duration=$(SEC) -ac $(CHANNEL) -acodec $(CODEC) noise_empty.wav
+	$(FFMPEG) -f lavfi -i anullsrc=channel_layout=$(LAYOUT):sample_rate=$(SAMPLES_PER_SEC):duration=$(SEC) -ac $(CHANNEL) -acodec $(CODEC) noise_empty.wav
 	mv noise_empty.wav $@
 noise_data.tmp: noise_empty.tmp noise_header.tmp
 #	ノイズ部分を生成
