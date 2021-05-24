@@ -13,8 +13,8 @@ BITS_PER_SAMPLE:=24
 CODEC:=pcm_s$(BITS_PER_SAMPLE)le
 
 # mono/stereo
-LAYOUT:=stereo
-ifeq ($(LAYOUT),mono)
+CHANNEL_LAYOUT:=stereo
+ifeq ($(CHANNEL_LAYOUT),mono)
 	CHANNEL:=1
 else
 	CHANNEL:=2
@@ -22,9 +22,9 @@ endif
 
 FFMPEG=ffmpeg -y -loglevel warning
 
-SINE_WAV:=sine-$(FREQUENCY)Hz-$(DURATION)ms-$(SAMPLES_PER_SEC)Hz-$(CODEC)-$(LAYOUT).wav
-SILENCE_WAV:=silence-$(DURATION)ms-$(SAMPLES_PER_SEC)Hz-$(CODEC)-$(LAYOUT).wav
-NOISE_WAV:=noise-$(DURATION)ms-$(SAMPLES_PER_SEC)Hz-$(CODEC)-$(LAYOUT).wav
+SINE_WAV:=sine-$(FREQUENCY)Hz-$(DURATION)ms-$(SAMPLES_PER_SEC)Hz-$(CODEC)-$(CHANNEL_LAYOUT).wav
+SILENCE_WAV:=silence-$(DURATION)ms-$(SAMPLES_PER_SEC)Hz-$(CODEC)-$(CHANNEL_LAYOUT).wav
+NOISE_WAV:=noise-$(DURATION)ms-$(SAMPLES_PER_SEC)Hz-$(CODEC)-$(CHANNEL_LAYOUT).wav
 
 noise_header_size=$(shell du -b noise_header.tmp | awk '{print $$1}')
 noise_data_size=$(shell du -b noise_empty.tmp | awk '{print $$1-$(noise_header_size)}')
@@ -34,7 +34,7 @@ config:
 	@echo -e "DURATION\t= $(DURATION)"
 	@echo -e "SAMPLES_PER_SEC\t= $(SAMPLES_PER_SEC)"
 	@echo -e "BITS_PER_SAMPLE\t= $(BITS_PER_SAMPLE)"
-	@echo -e "CHANNEL_LAYOUT\t= $(LAYOUT)"
+	@echo -e "CHANNEL_LAYOUT\t= $(CHANNEL_LAYOUT)"
 	@echo -e "bytes/ms\t= $(shell echo "scale=3; $(CHANNEL) * $(SAMPLES_PER_SEC) * $(BITS_PER_SAMPLE) / 8 / 1000" | bc)"
 #	bytes/msに端数がある場合、この形式ではミリ秒は正確に記録されない。
 
@@ -52,7 +52,7 @@ ifdef OUTPUT
 	mv $< $(OUTPUT)
 endif
 $(SILENCE_WAV):
-	$(FFMPEG) -f lavfi -i anullsrc=channel_layout=$(LAYOUT):sample_rate=$(SAMPLES_PER_SEC):duration=$(SEC) -ac $(CHANNEL) -acodec $(CODEC) $@
+	$(FFMPEG) -f lavfi -i anullsrc=channel_layout=$(CHANNEL_LAYOUT):sample_rate=$(SAMPLES_PER_SEC):duration=$(SEC) -ac $(CHANNEL) -acodec $(CODEC) $@
 
 # ノイズ
 noise: $(NOISE_WAV)
@@ -70,7 +70,7 @@ noise_header.tmp: noise_empty.tmp
 	perl -pe s/\(data.{4}\).*$$/\$$1/ $< > $@
 noise_empty.tmp:
 #	空白のwavファイルを生成
-	$(FFMPEG) -f lavfi -i anullsrc=channel_layout=$(LAYOUT):sample_rate=$(SAMPLES_PER_SEC):duration=$(SEC) -ac $(CHANNEL) -acodec $(CODEC) noise_empty.wav
+	$(FFMPEG) -f lavfi -i anullsrc=channel_layout=$(CHANNEL_LAYOUT):sample_rate=$(SAMPLES_PER_SEC):duration=$(SEC) -ac $(CHANNEL) -acodec $(CODEC) noise_empty.wav
 	mv noise_empty.wav $@
 noise_data.tmp: noise_empty.tmp noise_header.tmp
 #	ノイズ部分を生成
