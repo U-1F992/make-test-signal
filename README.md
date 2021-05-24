@@ -1,10 +1,11 @@
-# wav-generator
+# make-test-signal
 
 Simple command-line oscillator
 
 ## Requirements
 - make
 - ffmpeg
+- perl
 
 ## Configuration
 ```Makefile
