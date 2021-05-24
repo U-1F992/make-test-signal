@@ -9,8 +9,8 @@ SEC:=$(shell echo "scale=3; $(DURATION) / 1000" | bc | awk '{printf "%.3f\n", $$
 SAMPLES_PER_SEC:=48000
 # bit rate
 # see also ffmpeg document
-CODEC:=pcm_s24le
-BITS_PER_SAMPLE:=$(shell echo $(CODEC) | sed -e 's/[^0-9]//g')
+BITS_PER_SAMPLE:=24
+CODEC:=pcm_s$(BITS_PER_SAMPLE)le
 
 # mono/stereo
 LAYOUT:=stereo
@@ -33,8 +33,8 @@ config:
 	@echo -e "FREQUENCY\t= $(FREQUENCY)"
 	@echo -e "DURATION\t= $(DURATION)"
 	@echo -e "SAMPLES_PER_SEC\t= $(SAMPLES_PER_SEC)"
-	@echo -e "CODEC\t\t= $(CODEC)"
-	@echo -e "LAYOUT\t\t= $(LAYOUT)"
+	@echo -e "BITS_PER_SAMPLE\t= $(BITS_PER_SAMPLE)"
+	@echo -e "CHANNEL_LAYOUT\t= $(LAYOUT)"
 	@echo -e "bytes/ms\t= $(shell echo "scale=3; $(CHANNEL) * $(SAMPLES_PER_SEC) * $(BITS_PER_SAMPLE) / 8 / 1000" | bc)"
 #	bytes/msに端数がある場合、この形式ではミリ秒は正確に記録されない。
 
