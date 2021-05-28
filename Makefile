@@ -31,7 +31,7 @@ OSC_SILENCE:=-f lavfi -i anullsrc=channel_layout=$(CHANNEL_LAYOUT):sample_rate=$
 
 # default output name
 SINE_WAV:=sine-$(FREQUENCY)Hz-$(DURATION)ms-$(SAMPLES_PER_SEC)Hz-$(CODEC)-$(CHANNEL_LAYOUT)-$(VOLUME).wav
-SILENCE_WAV:=silence-$(DURATION)ms-$(SAMPLES_PER_SEC)Hz-$(CODEC)-$(CHANNEL_LAYOUT)-$(VOLUME).wav
+SILENCE_WAV:=silence-$(DURATION)ms-$(SAMPLES_PER_SEC)Hz-$(CODEC)-$(CHANNEL_LAYOUT).wav
 NOISE_WAV:=noise-$(DURATION)ms-$(SAMPLES_PER_SEC)Hz-$(CODEC)-$(CHANNEL_LAYOUT)-$(VOLUME).wav
 
 noise_header_size=$(shell du -b noise_header.tmp | awk '{print $$1}')
