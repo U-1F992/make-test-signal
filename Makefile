@@ -27,7 +27,7 @@ OPT:=-af volume=$(VOLUME) -ac $(CHANNEL) -acodec $(CODEC)
 
 # oscillator
 OSC_SINE:=-f lavfi -i sine=frequency=$(FREQUENCY):sample_rate=$(SAMPLES_PER_SEC):duration=$(SEC)
-OSC_SILENCE:=-f lavfi -i anullsrc=channel_layout=$(CHANNEL_LAYOUT):sample_rate=$(SAMPLES_PER_SEC):duration=$(SEC)
+OSC_SILENCE:=-f lavfi -i anullsrc=channel_layout=$(CHANNEL_LAYOUT):sample_rate=$(SAMPLES_PER_SEC) -t $(SEC)
 
 # default output name
 SINE_WAV:=sine-$(FREQUENCY)Hz-$(DURATION)ms-$(SAMPLES_PER_SEC)Hz-$(CODEC)-$(CHANNEL_LAYOUT)-$(VOLUME).wav
@@ -64,7 +64,9 @@ $(SILENCE_WAV):
 noise: $(NOISE_WAV)
 $(NOISE_WAV): noise_header.tmp noise_data.tmp
 #	結合
-	cat $^ > $@
+	cat $^ > $@.tmp
+	$(FFMPEG) -i $@.tmp -af volume=$(VOLUME) $@
+	$(RM) $@.tmp
 
 .INTERMEDIATE: noise_header.tmp noise_empty.tmp noise_data.tmp
 noise_header.tmp: noise_empty.tmp
@@ -81,4 +83,4 @@ noise_data.tmp: noise_empty.tmp noise_header.tmp
 
 .PHONY: clean
 clean:
-	rm -f *.wav *.tmp
+	$(RM) -f *.wav *.tmp
