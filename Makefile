@@ -62,13 +62,12 @@ $(SILENCE_WAV):
 
 # ノイズ
 noise: $(NOISE_WAV)
-$(NOISE_WAV): noise_header.tmp noise_data.tmp
+$(NOISE_WAV): noise_cat.tmp
+	$(FFMPEG) -i $< -af volume=$(VOLUME) $@
+.INTERMEDIATE: noise_header.tmp noise_empty.tmp noise_data.tmp noise_cat.tmp
+noise_cat.tmp: noise_header.tmp noise_data.tmp
 #	結合
-	cat $^ > $@.tmp
-	$(FFMPEG) -i $@.tmp -af volume=$(VOLUME) $@
-	$(RM) $@.tmp
-
-.INTERMEDIATE: noise_header.tmp noise_empty.tmp noise_data.tmp
+	cat $^ > $@
 noise_header.tmp: noise_empty.tmp
 #	ヘッダを切り出し
 #	サブチャンク識別子'data', サブチャンクサイズ4byte
