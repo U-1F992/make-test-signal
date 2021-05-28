@@ -10,6 +10,9 @@ BITS_PER_SAMPLE:=24
 # mono/stereo
 CHANNEL_LAYOUT:=stereo
 
+# volume
+VOLUME:=1
+
 FFMPEG=ffmpeg -y -loglevel warning
 
 SEC:=$(shell echo "scale=3; $(DURATION) / 1000" | bc | awk '{printf "%.3f\n", $$0}')
@@ -20,16 +23,16 @@ ifeq ($(CHANNEL_LAYOUT),mono)
 else
 	CHANNEL:=2
 endif
-OPT:=-ac $(CHANNEL) -acodec $(CODEC)
+OPT:=-af volume=$(VOLUME) -ac $(CHANNEL) -acodec $(CODEC)
 
 # oscillator
 OSC_SINE:=-f lavfi -i sine=frequency=$(FREQUENCY):sample_rate=$(SAMPLES_PER_SEC):duration=$(SEC)
 OSC_SILENCE:=-f lavfi -i anullsrc=channel_layout=$(CHANNEL_LAYOUT):sample_rate=$(SAMPLES_PER_SEC):duration=$(SEC)
 
 # default output name
-SINE_WAV:=sine-$(FREQUENCY)Hz-$(DURATION)ms-$(SAMPLES_PER_SEC)Hz-$(CODEC)-$(CHANNEL_LAYOUT).wav
-SILENCE_WAV:=silence-$(DURATION)ms-$(SAMPLES_PER_SEC)Hz-$(CODEC)-$(CHANNEL_LAYOUT).wav
-NOISE_WAV:=noise-$(DURATION)ms-$(SAMPLES_PER_SEC)Hz-$(CODEC)-$(CHANNEL_LAYOUT).wav
+SINE_WAV:=sine-$(FREQUENCY)Hz-$(DURATION)ms-$(SAMPLES_PER_SEC)Hz-$(CODEC)-$(CHANNEL_LAYOUT)-$(VOLUME).wav
+SILENCE_WAV:=silence-$(DURATION)ms-$(SAMPLES_PER_SEC)Hz-$(CODEC)-$(CHANNEL_LAYOUT)-$(VOLUME).wav
+NOISE_WAV:=noise-$(DURATION)ms-$(SAMPLES_PER_SEC)Hz-$(CODEC)-$(CHANNEL_LAYOUT)-$(VOLUME).wav
 
 noise_header_size=$(shell du -b noise_header.tmp | awk '{print $$1}')
 noise_data_size=$(shell du -b noise_empty.tmp | awk '{print $$1-$(noise_header_size)}')

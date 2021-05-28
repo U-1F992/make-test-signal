@@ -20,6 +20,9 @@ BITS_PER_SAMPLE:=24
 
 # mono/stereo
 CHANNEL_LAYOUT:=stereo
+
+# volume
+VOLUME:=1
 ```
 
 ## Usage
